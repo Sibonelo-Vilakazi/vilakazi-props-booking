@@ -1,0 +1,48 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom styles for react-day-picker */
+.rdp {
+  --rdp-accent-color: #2563eb;
+  --rdp-background-color: #e0e7ff;
+}
+
+.rdp-day_selected:not(.rdp-day_disabled) {
+  background-color: #2563eb;
+  color: white;
+}
+
+.rdp-day_selected:hover:not(.rdp-day_disabled) {
+  background-color: #1d4ed8;
+}
+
+.rdp-day:hover:not(.rdp-day_disabled):not(.rdp-day_selected) {
+  background-color: #f3f4f6;
+}
+
+.rdp-day_disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.rdp-months{
+    display: -webkit-inline-box !important;
+}
+
+/* Blocked dates styling with red background */
+.blocked-date {
+  position: relative;
+}
+
+.blocked-date::after {
+  content: '✕';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #dc2626;
+  font-size: 10px;
+  font-weight: bold;
+  pointer-events: none;
+}
