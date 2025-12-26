@@ -98,6 +98,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
     
     try {
       const success = await loginWithGoogle();
+      console.log({success})
       if (success) {
         onSuccess?.();
         onClose();

@@ -74,6 +74,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (userData) {
         setUser(userData);
         setIsLoading(false);
+        
+        // Redirect admin users to admin dashboard
+        if (userData.role === 'admin') {
+          window.location.href = '/admin';
+        }
+        
         return true;
       }
       
@@ -129,6 +135,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Existing user
         const userData = userDoc.data() as User;
         setUser(userData);
+        
+        // Redirect admin users to admin dashboard
+        if (userData.role === 'admin') {
+          window.location.href = '/admin';
+        }
       } else {
         // New user - create profile
         const newUser: User = {
@@ -136,7 +147,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           email: result.user.email || '',
           name: result.user.displayName || 'Google User',
           role: 'guest',
-          phone: result.user.phoneNumber || undefined,
+          phone: result.user.phoneNumber || '12346172617',
           createdAt: new Date().toISOString()
         };
         

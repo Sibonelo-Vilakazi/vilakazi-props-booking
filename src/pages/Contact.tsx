@@ -223,13 +223,24 @@ const Contact: React.FC = () => {
         <div className="mt-16 bg-white rounded-2xl shadow-xl overflow-hidden">
           <div className="p-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Our Location</h2>
-            <div className="bg-gray-200 rounded-lg h-96 flex items-center justify-center">
+            {/* <div className="bg-gray-200 rounded-lg h-96 flex items-center justify-center">
               <div className="text-center">
-                <MapPin className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600 font-medium">Interactive Map</p>
-                <p className="text-gray-500 text-sm">323 Surrey Ave, Ferndale, Randburg, 2194</p>
+                
+                <div className="bg-gray-200 h-64 w-full overflow-hidden rounded-lg relative">
+                  <div className="w-full h-full" dangerouslySetInnerHTML={ { __html: `<iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d4134.895138420052!2d18.517232876459747!3d-33.81690657324663!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x1dcc5f34d638a3bb%3A0x7f5f46e129c1630!2sTuscan%20Waters%20Rd%2C%20Milnerton%20Rural%2C%20Cape%20Town!5e1!3m2!1sen!2sza!4v1757371939164!5m2!1sen!2sza" 
+                  width="100%" height="100%" style="border:0;" allowfullscreen="" 
+                  loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+` } } />
+                </div>
               </div>
-            </div>
+            </div> */}
+            <div className="bg-gray-200 h-64 w-full overflow-hidden rounded-lg relative">
+                  <div className="w-full h-full" dangerouslySetInnerHTML={ { __html: `<iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d4469.693355633561!2d27.9989491!3d-26.091745200000002!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x1e957493b25e7b33%3A0x6a56b412ebad09ea!2s323%20Surrey%20Ave%2C%20Ferndale%2C%20Randburg%2C%202194!5e1!3m2!1sen!2sza!4v1766786350278!5m2!1sen!2sza" 
+                  width="100%" height="100%" style="border:0;" allowfullscreen="" 
+                  loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+` } } />
+                </div>
+
           </div>
         </div>
       </div>

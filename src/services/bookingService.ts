@@ -111,6 +111,29 @@ export const bookingService = {
       console.error('Error updating booking:', error);
       throw error;
     }
+  },
+
+  /**
+   * Get all bookings (Admin only)
+   * @returns Promise<Booking[]>
+   */
+  async getAllBookings(): Promise<Booking[]> {
+    try {
+      const querySnapshot = await getDocs(collection(db, 'bookings'));
+      
+      const bookings: Booking[] = [];
+      querySnapshot.forEach((doc) => {
+        bookings.push({ id: doc.id, ...doc.data() } as Booking);
+      });
+      
+      // Sort by creation date, newest first
+      return bookings.sort((a, b) => 
+        new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime()
+      );
+    } catch (error) {
+      console.error('Error fetching all bookings:', error);
+      throw error;
+    }
   }
 };
 

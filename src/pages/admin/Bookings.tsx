@@ -1,14 +1,43 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Search, Filter, Calendar, User, Phone, Mail, MoreHorizontal } from 'lucide-react';
-import { mockBookings } from '../../data/mockData';
+import { bookingService } from '../../services';
+import { useAuth } from '../../contexts/AuthContext';
+import { Booking } from '../../types';
 import { format } from 'date-fns';
 
 const AdminBookings: React.FC = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [selectedBooking, setSelectedBooking] = useState<string | null>(null);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const filteredBookings = mockBookings.filter(booking => {
+  useEffect(() => {
+    // Check if user is admin
+    if (!user || user.role !== 'admin') {
+      navigate('/');
+      return;
+    }
+
+    fetchBookings();
+  }, [user, navigate]);
+
+  const fetchBookings = async () => {
+    try {
+      setIsLoading(true);
+      const allBookings = await bookingService.getAllBookings();
+      setBookings(allBookings);
+    } catch (error) {
+      console.error('Error fetching bookings:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const filteredBookings = bookings.filter(booking => {
     const matchesSearch = booking.guestName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          booking.guestEmail.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = filterStatus === 'all' || booking.status === filterStatus;
@@ -29,6 +58,17 @@ const AdminBookings: React.FC = () => {
         return 'bg-gray-100 text-gray-800';
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading bookings...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -134,7 +174,7 @@ const AdminBookings: React.FC = () => {
                     {booking.guests} guest{booking.guests > 1 ? 's' : ''}
                   </td>
                   <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                    ${booking.totalPrice}
+                    R{booking.totalPrice}
                   </td>
                   <td className="px-6 py-4">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(booking.status)}`}>
@@ -167,7 +207,7 @@ const AdminBookings: React.FC = () => {
             </div>
             <div className="p-6">
               {(() => {
-                const booking = mockBookings.find(b => b.id === selectedBooking);
+                const booking = bookings.find(b => b.id === selectedBooking);
                 if (!booking) return null;
                 
                 return (
@@ -187,7 +227,7 @@ const AdminBookings: React.FC = () => {
                           <p><span className="font-medium">Check-in:</span> {format(new Date(booking.checkIn), 'MMMM d, yyyy')}</p>
                           <p><span className="font-medium">Check-out:</span> {format(new Date(booking.checkOut), 'MMMM d, yyyy')}</p>
                           <p><span className="font-medium">Guests:</span> {booking.guests}</p>
-                          <p><span className="font-medium">Total:</span> ${booking.totalPrice}</p>
+                          <p><span className="font-medium">Total:</span> R{booking.totalPrice}</p>
                         </div>
                       </div>
                     </div>
