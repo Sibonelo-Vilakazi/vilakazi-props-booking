@@ -136,7 +136,7 @@ const ReservationDetail: React.FC = () => {
 
   if (!reservation || !listing) {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-stone-100 flex items-center justify-center">
-        
+
     </div>
     return null;
   }
@@ -215,7 +215,7 @@ const ReservationDetail: React.FC = () => {
                     {format(new Date(reservation.checkOut), 'MMM dd, yyyy')}
                   </p>
                   <p className="text-sm text-gray-600">
-                    {format(new Date(reservation.checkOut), 'EEEE')} • Before {listing.policies.checkOut}
+                    {/* {format(new Date(reservation.checkOut), 'EEEE')} • Before {listing.policies.checkOut} */}
                   </p>
                 </div>
               </div>
