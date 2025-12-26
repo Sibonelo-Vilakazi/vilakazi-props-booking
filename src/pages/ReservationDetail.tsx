@@ -215,7 +215,7 @@ const ReservationDetail: React.FC = () => {
                     {format(new Date(reservation.checkOut), 'MMM dd, yyyy')}
                   </p>
                   <p className="text-sm text-gray-600">
-                    {/* {format(new Date(reservation.checkOut), 'EEEE')} • Before {listing.policies.checkOut} */}
+                    {format(new Date(reservation.checkOut), 'EEEE')} • Before {listing.policies.checkOut}
                   </p>
                 </div>
               </div>
