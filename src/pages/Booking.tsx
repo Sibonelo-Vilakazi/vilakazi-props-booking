@@ -64,7 +64,17 @@ const Booking: React.FC = () => {
       try {
         setIsLoadingAvailability(true);
         const dates = await availabilityService.getBlockedDates('1');
-        setBlockedDates(dates);
+        const response = await fetch('http://localhost:3000/check-availability', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ listingId: '1' }),
+        });
+        const availability = await response.json();
+        const blockedDatesFromRanges = availability.ranges.flatMap((range: any) => range.dates || []);
+        const allBlockedDates = [...new Set([...availability.blockedDates, ...blockedDatesFromRanges, ...dates])];
+        setBlockedDates(allBlockedDates);
       } catch (error) {
         console.error('Error fetching blocked dates:', error);
         setBlockedDates([]);
@@ -237,7 +247,16 @@ const Booking: React.FC = () => {
         id: bookingId
       };
       localStorage.setItem('pendingBooking', JSON.stringify(completeBookingData));
-      
+      await fetch('http://localhost:3000/transactions/initiate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(completeBookingData),
+      }).then(async (res) =>{
+        const response = await res.json() as {completeUrl: string};
+        window.open(response.completeUrl);
+      });
       setIsSubmitting(false);
       navigate('/booking/confirmation');
     } catch (error) {

@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, MapPin, Users, Clock, Star, X, Mail, Phone } from 'lucide-react';
+import { Calendar, MapPin, Users, Clock, Star } from 'lucide-react';
 import { listingService, bookingService } from '../services';
 import { useAuth } from '../contexts/AuthContext';
 import { formatCurrency } from '../utils/currency';
@@ -11,13 +11,13 @@ const ReservationHistory: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [selectedFilter, setSelectedFilter] = useState<'all' | 'upcoming' | 'completed' | 'cancelled'>('all');
-  const [selectedReservation, setSelectedReservation] = useState<Booking | null>(null);
   const [userReservations, setUserReservations] = useState<Booking[]>([]);
   const [listing, setListing] = useState<Listing | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // Fetch user's reservations using service
   useEffect(() => {
+    console.log('Fetching reservations for user:', user);
     const fetchReservations = async () => {
       if (!user) {
         setIsLoading(false);
@@ -186,7 +186,7 @@ const ReservationHistory: React.FC = () => {
                 <div
                   key={reservation.id}
                   className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow cursor-pointer"
-                  onClick={() => setSelectedReservation(reservation)}
+                  onClick={() => navigate(`/reservations/${reservation.id}`)}
                 >
                   <div className="md:flex">
                     {/* Property Image */}
@@ -279,157 +279,6 @@ const ReservationHistory: React.FC = () => {
           </div>
         )}
       </div>
-
-      {/* Reservation Detail Modal */}
-      {selectedReservation && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white">
-              <h2 className="text-xl font-bold text-gray-900">Reservation Details</h2>
-              <button
-                onClick={() => setSelectedReservation(null)}
-                className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-50"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="p-6">
-              {/* Property Info */}
-              <div className="mb-6">
-                <img
-                  src={listing?.images[0] || ''}
-                  alt={listing?.title || 'Property'}
-                  className="w-full h-64 object-cover rounded-lg mb-4"
-                />
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">{listing?.title || 'Property'}</h3>
-                <div className="flex items-center text-gray-600">
-                  <MapPin className="w-4 h-4 mr-1" />
-                  {listing?.location.address || 'Address not available'}
-                </div>
-              </div>
-
-              {/* Status and Payment */}
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div>
-                  <div className="text-sm text-gray-600 mb-1">Booking Status</div>
-                  {getStatusBadge(selectedReservation.status)}
-                </div>
-                <div>
-                  <div className="text-sm text-gray-600 mb-1">Payment Status</div>
-                  {getPaymentStatusBadge(selectedReservation.paymentStatus)}
-                </div>
-              </div>
-
-              {/* Dates and Guests */}
-              <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <div className="text-sm text-gray-600 mb-1">Check-in</div>
-                    <div className="font-semibold text-gray-900">
-                      {format(new Date(selectedReservation.checkIn), 'EEEE, MMMM dd, yyyy')}
-                    </div>
-                    <div className="text-sm text-gray-600">After {listing?.policies.checkIn || '3:00 PM'}</div>
-                  </div>
-                  <div>
-                    <div className="text-sm text-gray-600 mb-1">Check-out</div>
-                    <div className="font-semibold text-gray-900">
-                      {format(new Date(selectedReservation.checkOut), 'EEEE, MMMM dd, yyyy')}
-                    </div>
-                    <div className="text-sm text-gray-600">Before {listing?.policies.checkOut || '10:00 AM'}</div>
-                  </div>
-                  <div>
-                    <div className="text-sm text-gray-600 mb-1">Number of Guests</div>
-                    <div className="font-semibold text-gray-900">
-                      {selectedReservation.guests} guest{selectedReservation.guests > 1 ? 's' : ''}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-sm text-gray-600 mb-1">Booking ID</div>
-                    <div className="font-mono text-sm text-gray-900">{selectedReservation.id}</div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Special Requests */}
-              {selectedReservation.specialRequests && (
-                <div className="mb-6">
-                  <div className="text-sm font-medium text-gray-700 mb-2">Special Requests</div>
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-gray-700">
-                    {selectedReservation.specialRequests}
-                  </div>
-                </div>
-              )}
-
-              {/* Price Breakdown */}
-              <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg p-6 border border-blue-100">
-                <h4 className="font-semibold text-gray-900 mb-4">Price Breakdown</h4>
-                <div className="space-y-2 text-gray-700">
-                  <div className="flex justify-between">
-                    <span>
-                      {formatCurrency(listing?.price || 0)} × {differenceInDays(new Date(selectedReservation.checkOut), new Date(selectedReservation.checkIn))} nights
-                    </span>
-                    <span className="font-medium">{formatCurrency(selectedReservation.totalPrice - 250)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Cleaning fee</span>
-                    <span className="font-medium">{formatCurrency(200)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Service fee</span>
-                    <span className="font-medium">{formatCurrency(50)}</span>
-                  </div>
-                  <div className="border-t border-blue-200 pt-2 mt-2">
-                    <div className="flex justify-between text-lg font-bold text-gray-900">
-                      <span>Total</span>
-                      <span>{formatCurrency(selectedReservation.totalPrice)}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Contact Info */}
-              <div className="mt-6 pt-6 border-t border-gray-200">
-                <h4 className="font-semibold text-gray-900 mb-3">Guest Information</h4>
-                <div className="space-y-2 text-gray-700">
-                  <div className="flex items-center">
-                    <Users className="w-4 h-4 mr-2 text-gray-400" />
-                    {selectedReservation.guestName}
-                  </div>
-                  <div className="flex items-center">
-                    <Mail className="w-4 h-4 mr-2 text-gray-400" />
-                    {selectedReservation.guestEmail}
-                  </div>
-                  <div className="flex items-center">
-                    <Phone className="w-4 h-4 mr-2 text-gray-400" />
-                    {selectedReservation.guestPhone}
-                  </div>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="mt-6 flex gap-3">
-                {selectedReservation.status === 'confirmed' && isFuture(new Date(selectedReservation.checkIn)) && (
-                  <button className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors">
-                    Cancel Booking
-                  </button>
-                )}
-                {selectedReservation.status === 'completed' && !selectedReservation.rating && (
-                  <button className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors">
-                    Leave a Review
-                  </button>
-                )}
-                <button 
-                  onClick={() => setSelectedReservation(null)}
-                  className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-900 font-semibold py-3 px-4 rounded-lg transition-colors"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

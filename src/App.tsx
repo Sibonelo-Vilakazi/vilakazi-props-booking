@@ -12,6 +12,7 @@ import BookingConfirmation from './pages/BookingConfirmation';
 import Gallery from './pages/Gallery';
 import Contact from './pages/Contact';
 import ReservationHistory from './pages/ReservationHistory';
+import ReservationDetail from './pages/ReservationDetail';
 import InitializeDatabase from './pages/InitializeDatabase';
 
 // Admin pages
@@ -36,6 +37,7 @@ function App() {
           <Route path="/contact" element={<Layout><Contact /></Layout>} />
           <Route path="/location" element={<Layout><Contact /></Layout>} />
           <Route path="/reservations" element={<Layout><ReservationHistory /></Layout>} />
+          <Route path="/reservations/:bookingId" element={<Layout><ReservationDetail /></Layout>} />
           <Route path="/initialize-db" element={<InitializeDatabase />} />
 
           {/* Admin Routes */}
