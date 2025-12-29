@@ -53,15 +53,23 @@ export const listingService = {
 
 // Example of how to migrate to Node.js backend:
 /*
+import { buildApiUrl, API_ENDPOINTS, getFetchOptions } from '../config/api';
+
 export const listingService = {
   async getListingById(listingId: string): Promise<Listing | null> {
-    const response = await fetch(`${API_BASE_URL}/api/listings/${listingId}`);
+    const response = await fetch(
+      buildApiUrl(API_ENDPOINTS.LISTINGS.GET_BY_ID(listingId)),
+      getFetchOptions()
+    );
     if (!response.ok) return null;
     return await response.json();
   },
 
   async getAllListings(): Promise<Listing[]> {
-    const response = await fetch(`${API_BASE_URL}/api/listings`);
+    const response = await fetch(
+      buildApiUrl(API_ENDPOINTS.LISTINGS.GET_ALL),
+      getFetchOptions()
+    );
     if (!response.ok) throw new Error('Failed to fetch listings');
     return await response.json();
   }

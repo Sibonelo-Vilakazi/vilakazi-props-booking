@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Mail, Lock, User, Phone, Eye, EyeOff } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { useAuth } from '../contexts/AuthContext';
+import { Link } from 'react-router-dom';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -183,6 +184,16 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
                 {loginForm.formState.errors.password && (
                   <p className="text-red-500 text-sm mt-1">{loginForm.formState.errors.password.message}</p>
                 )}
+              </div>
+
+              <div className="flex items-center justify-between">
+                <Link
+                  to="/forgot-password"
+                  onClick={onClose}
+                  className="text-sm text-blue-600 hover:text-blue-700 hover:underline"
+                >
+                  Forgot your password?
+                </Link>
               </div>
 
               <button

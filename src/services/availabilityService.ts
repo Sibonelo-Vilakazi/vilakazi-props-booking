@@ -84,29 +84,34 @@ export const availabilityService = {
 
 // Example of how to migrate to Node.js backend:
 /*
+import { buildApiUrl, API_ENDPOINTS, getFetchOptions } from '../config/api';
+
 export const availabilityService = {
   async getBlockedDates(listingId: string): Promise<string[]> {
-    const response = await fetch(`${API_BASE_URL}/api/availability/${listingId}`);
+    const response = await fetch(
+      buildApiUrl(API_ENDPOINTS.AVAILABILITY.GET_BLOCKED(listingId)),
+      getFetchOptions()
+    );
     if (!response.ok) throw new Error('Failed to fetch availability');
     const data = await response.json();
     return data.blockedDates;
   },
 
   async updateBlockedDates(listingId: string, blockedDates: string[]): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/api/availability/${listingId}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${getAuthToken()}`
-      },
-      body: JSON.stringify({ blockedDates })
-    });
+    const response = await fetch(
+      buildApiUrl(API_ENDPOINTS.AVAILABILITY.UPDATE(listingId)),
+      getFetchOptions({
+        method: 'PUT',
+        body: JSON.stringify({ blockedDates })
+      })
+    );
     if (!response.ok) throw new Error('Failed to update availability');
   },
 
   async checkAvailability(listingId: string, checkIn: string, checkOut: string): Promise<boolean> {
     const response = await fetch(
-      `${API_BASE_URL}/api/availability/${listingId}/check?checkIn=${checkIn}&checkOut=${checkOut}`
+      buildApiUrl(`${API_ENDPOINTS.AVAILABILITY.CHECK_DATES(listingId)}?checkIn=${checkIn}&checkOut=${checkOut}`),
+      getFetchOptions()
     );
     if (!response.ok) throw new Error('Failed to check availability');
     const data = await response.json();

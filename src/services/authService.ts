@@ -146,13 +146,17 @@ export const authService = {
 
 // Example of how to migrate to Node.js backend:
 /*
+import { buildApiUrl, API_ENDPOINTS, getFetchOptions } from '../config/api';
+
 export const authService = {
   async signIn(email: string, password: string): Promise<User> {
-    const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
-    });
+    const response = await fetch(
+      buildApiUrl(API_ENDPOINTS.AUTH.LOGIN),
+      getFetchOptions({
+        method: 'POST',
+        body: JSON.stringify({ email, password })
+      })
+    );
     if (!response.ok) throw new Error('Login failed');
     const data = await response.json();
     localStorage.setItem('authToken', data.token);
@@ -160,11 +164,13 @@ export const authService = {
   },
 
   async register(email: string, password: string, name: string, phone?: string): Promise<User> {
-    const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, name, phone })
-    });
+    const response = await fetch(
+      buildApiUrl(API_ENDPOINTS.AUTH.REGISTER),
+      getFetchOptions({
+        method: 'POST',
+        body: JSON.stringify({ email, password, name, phone })
+      })
+    );
     if (!response.ok) throw new Error('Registration failed');
     const data = await response.json();
     localStorage.setItem('authToken', data.token);
@@ -173,7 +179,7 @@ export const authService = {
 
   async signInWithGoogle(): Promise<User> {
     // Implement OAuth flow with your backend
-    window.location.href = `${API_BASE_URL}/api/auth/google`;
+    window.location.href = buildApiUrl('/api/auth/google');
   },
 
   async signOut(): Promise<void> {
@@ -181,10 +187,10 @@ export const authService = {
   },
 
   async getCurrentUserProfile(userId: string): Promise<User | null> {
-    const token = localStorage.getItem('authToken');
-    const response = await fetch(`${API_BASE_URL}/api/users/${userId}`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
+    const response = await fetch(
+      buildApiUrl(API_ENDPOINTS.AUTH.PROFILE(userId)),
+      getFetchOptions()
+    );
     if (!response.ok) return null;
     return await response.json();
   }

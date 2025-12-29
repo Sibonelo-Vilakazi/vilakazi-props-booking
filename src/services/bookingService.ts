@@ -139,38 +139,39 @@ export const bookingService = {
 
 // Example of how to migrate to Node.js backend:
 /*
+import { buildApiUrl, API_ENDPOINTS, getFetchOptions } from '../config/api';
+
 export const bookingService = {
   async getBookingsByUserId(userId: string): Promise<Booking[]> {
-    const response = await fetch(`${API_BASE_URL}/api/bookings/user/${userId}`, {
-      headers: { 'Authorization': `Bearer ${getAuthToken()}` }
-    });
+    const response = await fetch(
+      buildApiUrl(API_ENDPOINTS.BOOKINGS.GET_BY_USER(userId)),
+      getFetchOptions()
+    );
     if (!response.ok) throw new Error('Failed to fetch bookings');
     return await response.json();
   },
 
   async createBooking(bookingData: Omit<Booking, 'id'>): Promise<string> {
-    const response = await fetch(`${API_BASE_URL}/api/bookings`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${getAuthToken()}`
-      },
-      body: JSON.stringify(bookingData)
-    });
+    const response = await fetch(
+      buildApiUrl(API_ENDPOINTS.BOOKINGS.CREATE),
+      getFetchOptions({
+        method: 'POST',
+        body: JSON.stringify(bookingData)
+      })
+    );
     if (!response.ok) throw new Error('Failed to create booking');
     const result = await response.json();
     return result.id;
   },
 
   async updateBooking(bookingId: string, updates: Partial<Booking>): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/api/bookings/${bookingId}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${getAuthToken()}`
-      },
-      body: JSON.stringify(updates)
-    });
+    const response = await fetch(
+      buildApiUrl(API_ENDPOINTS.BOOKINGS.UPDATE(bookingId)),
+      getFetchOptions({
+        method: 'PATCH',
+        body: JSON.stringify(updates)
+      })
+    );
     if (!response.ok) throw new Error('Failed to update booking');
   }
 };

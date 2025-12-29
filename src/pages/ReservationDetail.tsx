@@ -9,7 +9,8 @@ import { Booking, Listing } from '../types';
 import RatingModal from '../components/RatingModal';
 
 const ReservationDetail: React.FC = () => {
-  const { bookingId } = useParams<{ bookingId: string }>();
+//   const { bookingId } = useParams<{ bookingId: string }>();
+   const { bookingId } = useParams<{ bookingId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [reservation, setReservation] = useState<Booking | null>(null);

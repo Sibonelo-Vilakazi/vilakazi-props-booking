@@ -11,6 +11,7 @@ import { formatCurrency } from '../utils/currency';
 import { useAuth } from '../contexts/AuthContext';
 import AuthModal from '../components/AuthModal';
 import ChatWidget from '../components/ChatWidget';
+import { buildApiUrl, API_ENDPOINTS } from '../config/api';
 
 interface BookingFormData {
   guestName: string;
@@ -64,7 +65,7 @@ const Booking: React.FC = () => {
       try {
         setIsLoadingAvailability(true);
         const dates = await availabilityService.getBlockedDates('1');
-        const response = await fetch('http://localhost:3000/check-availability', {
+        const response = await fetch(buildApiUrl(API_ENDPOINTS.AVAILABILITY.CHECK), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -247,7 +248,7 @@ const Booking: React.FC = () => {
         id: bookingId
       };
       localStorage.setItem('pendingBooking', JSON.stringify(completeBookingData));
-      await fetch('http://localhost:3000/transactions/initiate', {
+      await fetch(buildApiUrl(API_ENDPOINTS.TRANSACTIONS.INITIATE), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

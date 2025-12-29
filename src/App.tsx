@@ -14,6 +14,9 @@ import Contact from './pages/Contact';
 import ReservationHistory from './pages/ReservationHistory';
 import ReservationDetail from './pages/ReservationDetail';
 import InitializeDatabase from './pages/InitializeDatabase';
+import ForgotPassword from './pages/ForgotPassword';
+import PaymentSuccess from './pages/PaymentSuccess';
+import PaymentFailed from './pages/PaymentFailed';
 
 // Admin pages
 import AdminLogin from './pages/admin/Login';
@@ -38,6 +41,9 @@ function App() {
           <Route path="/location" element={<Layout><Contact /></Layout>} />
           <Route path="/reservations" element={<Layout><ReservationHistory /></Layout>} />
           <Route path="/reservations/:bookingId" element={<Layout><ReservationDetail /></Layout>} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/payment/success/:bookingId" element={<PaymentSuccess />} />
+          <Route path="/payment/failed/:bookingId" element={<PaymentFailed />} />
           <Route path="/initialize-db" element={<InitializeDatabase />} />
 
           {/* Admin Routes */}
