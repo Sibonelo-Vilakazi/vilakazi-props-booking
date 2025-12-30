@@ -46,6 +46,11 @@ export interface Booking {
   createdAt: string;
   specialRequests?: string;
   paymentStatus: 'pending' | 'paid' | 'refunded';
+  cancelledBy?: 'admin' | 'guest';
+  cancelledAt?: string;
+  cancellationReason?: string;
+  refundStatus?: 'pending' | 'processed' | 'not_applicable';
+  refundProcessedAt?: string | null;
   rating?: {
     score: number;
     review: string;

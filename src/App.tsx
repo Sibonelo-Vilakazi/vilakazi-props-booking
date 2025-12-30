@@ -17,6 +17,7 @@ import InitializeDatabase from './pages/InitializeDatabase';
 import ForgotPassword from './pages/ForgotPassword';
 import PaymentSuccess from './pages/PaymentSuccess';
 import PaymentFailed from './pages/PaymentFailed';
+import TermsAndConditions from './pages/TermsAndConditions';
 
 // Admin pages
 import AdminLogin from './pages/admin/Login';
@@ -41,6 +42,7 @@ function App() {
           <Route path="/location" element={<Layout><Contact /></Layout>} />
           <Route path="/reservations" element={<Layout><ReservationHistory /></Layout>} />
           <Route path="/reservations/:bookingId" element={<Layout><ReservationDetail /></Layout>} />
+          <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/payment/success/:bookingId" element={<PaymentSuccess />} />
           <Route path="/payment/failed/:bookingId" element={<PaymentFailed />} />

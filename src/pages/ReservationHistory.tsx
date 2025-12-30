@@ -1,10 +1,10 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, MapPin, Users, Clock, Star } from 'lucide-react';
+import { Calendar, MapPin, Users, Clock, Star, XCircle, AlertTriangle } from 'lucide-react';
 import { listingService, bookingService } from '../services';
 import { useAuth } from '../contexts/AuthContext';
 import { formatCurrency } from '../utils/currency';
-import { format, differenceInDays, isFuture } from 'date-fns';
+import { format, differenceInDays, isFuture, differenceInHours } from 'date-fns';
 import { Booking, Listing } from '../types';
 
 const ReservationHistory: React.FC = () => {
@@ -14,6 +14,62 @@ const ReservationHistory: React.FC = () => {
   const [userReservations, setUserReservations] = useState<Booking[]>([]);
   const [listing, setListing] = useState<Listing | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [selectedReservation, setSelectedReservation] = useState<Booking | null>(null);
+
+  // Check if reservation can be cancelled (48 hours before check-in)
+  const canCancelReservation = (checkInDate: string, status: Booking['status']) => {
+    if (status === 'cancelled' || status === 'completed') {
+      return { canCancel: false, reason: 'Reservation already ' + status };
+    }
+    
+    const hoursUntilCheckIn = differenceInHours(new Date(checkInDate), new Date());
+    
+    if (hoursUntilCheckIn < 48) {
+      return { 
+        canCancel: false, 
+        reason: 'Cancellation must be made at least 48 hours before check-in' 
+      };
+    }
+    
+    return { canCancel: true, reason: '' };
+  };
+
+  const handleCancelClick = (reservation: Booking) => {
+    setSelectedReservation(reservation);
+    setShowCancelModal(true);
+  };
+
+  const handleCancelConfirm = async () => {
+    if (!selectedReservation) return;
+
+    setCancellingId(selectedReservation.id);
+    try {
+      const result = await bookingService.cancelReservation(
+        selectedReservation.id,
+        'guest',
+        'Cancelled by guest'
+      );
+
+      // Update local state
+      setUserReservations(prev => 
+        prev.map(r => 
+          r.id === selectedReservation.id 
+            ? { ...r, status: 'cancelled' as const, cancelledBy: 'guest', cancelledAt: new Date().toISOString() }
+            : r
+        )
+      );
+
+      alert(result.message || 'Reservation cancelled successfully. Refund will be processed within 5-10 business days.');
+      setShowCancelModal(false);
+      setSelectedReservation(null);
+    } catch (error: any) {
+      alert(error.message || 'Failed to cancel reservation. Please try again or contact support.');
+    } finally {
+      setCancellingId(null);
+    }
+  };
 
   // Fetch user's reservations using service
   useEffect(() => {
@@ -251,6 +307,45 @@ const ReservationHistory: React.FC = () => {
                         </div>
                       </div>
 
+                      {/* Cancel Button Section */}
+                      {reservation.status !== 'cancelled' && reservation.status !== 'completed' && (
+                        <div className="mt-4 pt-4 border-t border-gray-200">
+                          {(() => {
+                            const { canCancel, reason } = canCancelReservation(reservation.checkIn, reservation.status);
+                            return canCancel ? (
+                              <button
+                                onClick={() => handleCancelClick(reservation)}
+                                disabled={cancellingId === reservation.id}
+                                className="w-full md:w-auto px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white rounded-lg transition-colors flex items-center justify-center space-x-2"
+                              >
+                                <XCircle className="w-4 h-4" />
+                                <span>{cancellingId === reservation.id ? 'Cancelling...' : 'Cancel Reservation'}</span>
+                              </button>
+                            ) : (
+                              <div className="flex items-start space-x-2 text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
+                                <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0 text-yellow-600" />
+                                <span>{reason}</span>
+                              </div>
+                            );
+                          })()}
+                        </div>
+                      )}
+
+                      {reservation.status === 'cancelled' && (
+                        <div className="mt-4 pt-4 border-t border-gray-200">
+                          <div className="bg-red-50 p-3 rounded-lg">
+                            <p className="text-sm text-red-800">
+                              <strong>Cancelled</strong> {reservation.cancelledAt && `on ${format(new Date(reservation.cancelledAt), 'MMM dd, yyyy')}`}
+                            </p>
+                            {reservation.refundStatus && (
+                              <p className="text-xs text-red-700 mt-1">
+                                Refund status: <span className="font-medium">{reservation.refundStatus.replace('_', ' ')}</span>
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
                       {reservation.rating && (
                         <div className="mt-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
                           <div className="flex items-center mb-2">
@@ -279,6 +374,67 @@ const ReservationHistory: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Cancellation Confirmation Modal */}
+      {showCancelModal && selectedReservation && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                <AlertTriangle className="w-6 h-6 text-red-600" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900">Cancel Reservation?</h3>
+            </div>
+            
+            <div className="space-y-3 mb-6">
+              <p className="text-gray-700">
+                Are you sure you want to cancel your reservation for:
+              </p>
+              <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+                <p className="font-semibold text-gray-900">{listing?.title}</p>
+                <p className="text-sm text-gray-600">
+                  {format(new Date(selectedReservation.checkIn), 'MMM dd, yyyy')} - {format(new Date(selectedReservation.checkOut), 'MMM dd, yyyy')}
+                </p>
+                <p className="text-sm text-gray-600">
+                  Total: {formatCurrency(selectedReservation.totalPrice)}
+                </p>
+              </div>
+              <div className="bg-green-50 border-l-4 border-green-500 p-3">
+                <p className="text-sm text-green-800">
+                  <strong>Refund Policy:</strong> You will receive a full refund within 5-10 business days.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex space-x-3">
+              <button
+                onClick={() => {
+                  setShowCancelModal(false);
+                  setSelectedReservation(null);
+                }}
+                disabled={cancellingId !== null}
+                className="flex-1 px-4 py-3 bg-gray-200 hover:bg-gray-300 disabled:bg-gray-100 text-gray-800 rounded-lg font-semibold transition-colors"
+              >
+                Keep Reservation
+              </button>
+              <button
+                onClick={handleCancelConfirm}
+                disabled={cancellingId !== null}
+                className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white rounded-lg font-semibold transition-colors flex items-center justify-center"
+              >
+                {cancellingId ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                    Cancelling...
+                  </>
+                ) : (
+                  'Yes, Cancel'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

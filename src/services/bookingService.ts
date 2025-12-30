@@ -134,6 +134,89 @@ export const bookingService = {
       console.error('Error fetching all bookings:', error);
       throw error;
     }
+  },
+
+  /**
+   * Cancel a reservation
+   * Calls the backend API to process cancellation
+   * @param bookingId - The ID of the booking to cancel
+   * @param cancelledBy - Who is cancelling (admin or guest)
+   * @param reason - Optional cancellation reason
+   * @returns Promise<void>
+   */
+  async cancelReservation(
+    bookingId: string, 
+    cancelledBy: 'admin' | 'guest',
+    reason?: string
+  ): Promise<{ success: boolean; message: string; refundEligible?: boolean }> {
+    try {
+      // Call the cancellation endpoint
+      console.log({
+          bookingId,
+          uid: bookingId,
+          cancelledBy,
+          reason,
+          cancelledAt: new Date().toISOString()
+        });
+      const response = await fetch('http://localhost:3000/reservations/cancel', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          bookingId,
+          uid: bookingId,
+          cancelledBy,
+          reason,
+          cancelledAt: new Date().toISOString()
+        })
+      });
+
+      console.log('Cancellation response status:', response);
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to cancel reservation');
+      }
+
+      const result = await response.json();
+
+      // Update local Firebase booking status
+      const bookingRef = doc(db, 'bookings', bookingId);
+      await updateDoc(bookingRef, {
+        status: 'cancelled',
+        cancelledBy,
+        cancelledAt: new Date().toISOString(),
+        cancellationReason: reason || '',
+        refundStatus: result.refundEligible ? 'pending' : 'not_applicable'
+      });
+
+      return result;
+    } catch (error) {
+      console.error('Error cancelling reservation:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Update refund status for a cancelled booking
+   * @param bookingId - The ID of the booking
+   * @param refundStatus - The new refund status
+   * @returns Promise<void>
+   */
+  async updateRefundStatus(
+    bookingId: string,
+    refundStatus: 'pending' | 'processed' | 'not_applicable'
+  ): Promise<void> {
+    try {
+      const bookingRef = doc(db, 'bookings', bookingId);
+      await updateDoc(bookingRef, {
+        refundStatus,
+        refundProcessedAt: refundStatus === 'processed' ? new Date().toISOString() : null
+      });
+    } catch (error) {
+      console.error('Error updating refund status:', error);
+      throw error;
+    }
   }
 };
 

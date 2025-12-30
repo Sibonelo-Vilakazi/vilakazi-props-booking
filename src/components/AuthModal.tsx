@@ -333,6 +333,32 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
                 )}
               </div>
 
+              {/* Terms and Conditions Checkbox */}
+              <div className="flex items-start space-x-3">
+                <input
+                  type="checkbox"
+                  {...registerForm.register('acceptTerms', { 
+                    required: 'You must accept the terms and conditions' 
+                  })}
+                  className="w-4 h-4 mt-1 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <label className="text-sm text-gray-700">
+                  I agree to the{' '}
+                  <Link
+                    to="/terms-and-conditions"
+                    target="_blank"
+                    className="text-blue-600 hover:text-blue-700 underline"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    Terms and Conditions
+                  </Link>
+                  {' '}including the 48-hour cancellation policy
+                </label>
+              </div>
+              {registerForm.formState.errors.acceptTerms && (
+                <p className="text-red-500 text-sm -mt-2">{registerForm.formState.errors.acceptTerms.message}</p>
+              )}
+
               <button
                 type="submit"
                 disabled={isSubmitting}

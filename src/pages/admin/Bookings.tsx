@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Filter, Calendar, User, Phone, Mail, MoreHorizontal } from 'lucide-react';
+import { Search, Filter, Calendar, User, Phone, Mail, MoreHorizontal, XCircle, AlertTriangle, CheckCircle } from 'lucide-react';
 import { bookingService } from '../../services';
 import { useAuth } from '../../contexts/AuthContext';
 import { Booking } from '../../types';
@@ -14,6 +14,11 @@ const AdminBookings: React.FC = () => {
   const [selectedBooking, setSelectedBooking] = useState<string | null>(null);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'all' | 'cancelled'>('all');
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [bookingToCancel, setBookingToCancel] = useState<Booking | null>(null);
+  const [cancelReason, setCancelReason] = useState('');
 
   useEffect(() => {
     // Check if user is admin
@@ -41,8 +46,49 @@ const AdminBookings: React.FC = () => {
     const matchesSearch = booking.guestName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          booking.guestEmail.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = filterStatus === 'all' || booking.status === filterStatus;
-    return matchesSearch && matchesStatus;
+    const matchesTab = activeTab === 'all' ? booking.status !== 'cancelled' : booking.status === 'cancelled';
+    return matchesSearch && matchesStatus && matchesTab;
   });
+
+  const handleCancelClick = (booking: Booking) => {
+    setBookingToCancel(booking);
+    setShowCancelModal(true);
+  };
+
+  const handleCancelConfirm = async () => {
+    if (!bookingToCancel) return;
+
+    setCancellingId(bookingToCancel.id);
+    try {
+      const result = await bookingService.cancelReservation(
+        bookingToCancel.id,
+        'admin',
+        cancelReason || 'Cancelled by admin'
+      );
+
+      // Refresh bookings
+      await fetchBookings();
+      
+      alert(result.message || 'Reservation cancelled successfully.');
+      setShowCancelModal(false);
+      setBookingToCancel(null);
+      setCancelReason('');
+    } catch (error: any) {
+      alert(error.message || 'Failed to cancel reservation.');
+    } finally {
+      setCancellingId(null);
+    }
+  };
+
+  const handleRefundStatusUpdate = async (bookingId: string, newStatus: 'pending' | 'processed' | 'not_applicable') => {
+    try {
+      await bookingService.updateRefundStatus(bookingId, newStatus);
+      await fetchBookings();
+      alert('Refund status updated successfully');
+    } catch (error) {
+      alert('Failed to update refund status');
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -76,6 +122,38 @@ const AdminBookings: React.FC = () => {
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Bookings</h1>
         <p className="text-gray-600 mt-2">Manage all your property bookings</p>
+      </div>
+
+      {/* Tabs */}
+      <div className="border-b border-gray-200">
+        <nav className="-mb-px flex space-x-8">
+          <button
+            onClick={() => setActiveTab('all')}
+            className={`${
+              activeTab === 'all'
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors`}
+          >
+            Active Bookings
+            <span className={`ml-2 ${activeTab === 'all' ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600'} px-2.5 py-0.5 rounded-full text-xs`}>
+              {bookings.filter(b => b.status !== 'cancelled').length}
+            </span>
+          </button>
+          <button
+            onClick={() => setActiveTab('cancelled')}
+            className={`${
+              activeTab === 'cancelled'
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors`}
+          >
+            Cancelled Reservations
+            <span className={`ml-2 ${activeTab === 'cancelled' ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600'} px-2.5 py-0.5 rounded-full text-xs`}>
+              {bookings.filter(b => b.status.toLowerCase() === 'cancelled').length}
+            </span>
+          </button>
+        </nav>
       </div>
 
       {/* Filters */}
@@ -133,6 +211,11 @@ const AdminBookings: React.FC = () => {
                 <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
                 </th>
+                {activeTab === 'cancelled' && (
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Refund Status
+                  </th>
+                )}
                 <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
                 </th>
@@ -181,8 +264,31 @@ const AdminBookings: React.FC = () => {
                       {booking.status}
                     </span>
                   </td>
+                  {activeTab === 'cancelled' && (
+                    <td className="px-6 py-4">
+                      <select
+                        value={booking.refundStatus || 'pending'}
+                        onChange={(e) => handleRefundStatusUpdate(booking.id, e.target.value as any)}
+                        className="text-xs border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      >
+                        <option value="pending">Pending</option>
+                        <option value="processed">Processed</option>
+                        <option value="not_applicable">Not Applicable</option>
+                      </select>
+                    </td>
+                  )}
                   <td className="px-6 py-4">
                     <div className="flex items-center space-x-2">
+                      {activeTab === 'all' && booking.status !== 'cancelled' && (
+                        <button
+                          onClick={() => handleCancelClick(booking)}
+                          disabled={cancellingId === booking.id}
+                          className="text-red-600 hover:text-red-700 disabled:text-red-400"
+                          title="Cancel Reservation"
+                        >
+                          <XCircle className="w-5 h-5" />
+                        </button>
+                      )}
                       <button
                         onClick={() => setSelectedBooking(selectedBooking === booking.id ? null : booking.id)}
                         className="text-gray-400 hover:text-gray-600"
@@ -255,6 +361,77 @@ const AdminBookings: React.FC = () => {
                   </div>
                 );
               })()}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cancel Confirmation Modal */}
+      {showCancelModal && bookingToCancel && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                <AlertTriangle className="w-6 h-6 text-red-600" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900">Cancel Reservation</h3>
+            </div>
+            
+            <div className="space-y-4 mb-6">
+              <p className="text-gray-700">
+                Are you sure you want to cancel this reservation?
+              </p>
+              <div className="bg-gray-50 p-4 rounded-lg space-y-2 text-sm">
+                <p><strong>Guest:</strong> {bookingToCancel.guestName}</p>
+                <p><strong>Email:</strong> {bookingToCancel.guestEmail}</p>
+                <p><strong>Dates:</strong> {format(new Date(bookingToCancel.checkIn), 'MMM dd, yyyy')} - {format(new Date(bookingToCancel.checkOut), 'MMM dd, yyyy')}</p>
+                <p><strong>Total:</strong> R{bookingToCancel.totalPrice}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Cancellation Reason (Optional)
+                </label>
+                <textarea
+                  value={cancelReason}
+                  onChange={(e) => setCancelReason(e.target.value)}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Enter reason for cancellation..."
+                />
+              </div>
+              <div className="bg-yellow-50 border-l-4 border-yellow-500 p-3">
+                <p className="text-sm text-yellow-800">
+                  <strong>Note:</strong> The guest will be notified and receive a full refund.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex space-x-3">
+              <button
+                onClick={() => {
+                  setShowCancelModal(false);
+                  setBookingToCancel(null);
+                  setCancelReason('');
+                }}
+                disabled={cancellingId !== null}
+                className="flex-1 px-4 py-3 bg-gray-200 hover:bg-gray-300 disabled:bg-gray-100 text-gray-800 rounded-lg font-semibold transition-colors"
+              >
+                Keep Reservation
+              </button>
+              <button
+                onClick={handleCancelConfirm}
+                disabled={cancellingId !== null}
+                className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white rounded-lg font-semibold transition-colors flex items-center justify-center"
+              >
+                {cancellingId ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                    Cancelling...
+                  </>
+                ) : (
+                  'Confirm Cancellation'
+                )}
+              </button>
             </div>
           </div>
         </div>
